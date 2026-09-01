@@ -29,7 +29,6 @@ Review-AI Url:https://review-aiv1.vercel.app/
 10. [📈 Benchmark Evaluation & Performance](#-benchmark-evaluation--performance)
 11. [📂 Repository Structure](#-repository-structure)
 12. [🔌 REST API Documentation](#-rest-api-documentation)
-13. [🎯 Technical Interview & Evaluation Talking Points](#-technical-interview--evaluation-talking-points)
 
 ---
 
@@ -375,21 +374,6 @@ reviewai/
   }
 }
 ```
-
----
-
-## 🎯 Technical Interview & Evaluation Talking Points
-
-When presenting this project during a technical interview:
-
-1. **Why Hybrid over pure LLM?**
-   * *Answer*: LLMs frequently hallucinate line numbers and syntax facts. By running deterministic static analysis first, we supply the LLM with verifiable facts, using AI solely for root cause explanation and contextual fix generation.
-2. **How is security ensured?**
-   * *Answer*: Through the **Zero Code Execution Invariant**, submitted code is parsed strictly as passive AST data without execution. String literals are sanitized to prevent Prompt Injection, and 100% of inference runs locally on-device.
-3. **How does the scoring formula work?**
-   * *Answer*: Transparent 0–100 scoring based on a weighted multi-factor penalty model ($30\%$ Security, $30\%$ Reliability, $20\%$ Maintainability, $10\%$ Performance, $10\%$ Style).
-4. **How does the system handle high load or LLM failure?**
-   * *Answer*: Graceful degradation to `STATIC_ONLY` mode guarantees $<500\text{ms}$ turnaround time even under zero GPU availability.
 
 ---
 
