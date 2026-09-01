@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # ReviewAI Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: reviewai-backend
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - MAX_SOURCE_LINES=${MAX_SOURCE_LINES:-500}
+      - MAX_SOURCE_SIZE=${MAX_SOURCE_SIZE:-65536}
+      - ENABLE_STATIC_ANALYSIS=${ENABLE_STATIC_ANALYSIS:-true}
+      - ENABLE_LLM=${ENABLE_LLM:-true}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5-coder:7b-instruct}
+      - ALLOW_STATIC_FALLBACK=${ALLOW_STATIC_FALLBACK:-true}
+    volumes:
+      - ./backend:/app/backend
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - reviewai-network
+    restart: unless-stopped
+
+  # ReviewAI Frontend Web Client
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: reviewai-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:${API_PORT:-8000}
+    depends_on:
+      - backend
+    networks:
+      - reviewai-network
+    restart: unless-stopped
+
+  # Local-first LLM Provider (Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: reviewai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - reviewai-network
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  reviewai-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local
